@@ -28,7 +28,7 @@ Used in systems like:
 
 ### File: `app/models/usage.py`
 
-```python id="usage_py_01"
+```python
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime
 
