@@ -16,3 +16,8 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Verify a plain password against a hashed password.
     """
     return pwd_context.verify(plain_password, hashed_password)
+
+git add .
+git commit -m "fix: restore auth_service module for production deployment"
+git push origin main
+
