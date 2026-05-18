@@ -1,0 +1,22 @@
+---
+
+# 📁 4. FILE: `app/core/celery_app.py`
+
+```md id="s23_file_4"
+# ⚙️ Celery Worker System (Advanced Scaling)
+
+Adds distributed background processing.
+
+---
+
+## 🧱 Setup
+
+```python
+from celery import Celery
+import os
+
+celery = Celery(
+    "worker",
+    broker=os.getenv("REDIS_URL"),
+    backend=os.getenv("REDIS_URL")
+)
