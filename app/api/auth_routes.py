@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.services.auth_service import (
     hash_password,
@@ -8,11 +9,15 @@ from app.services.auth_service import (
 
 from app.core.security import create_access_token
 
+from app.db.deps import get_db
+from app.models.user import User
+
 router = APIRouter()
 
-# temporary in-memory database
-users_db = {}
 
+# =========================
+# REQUEST MODELS
+# =========================
 
 class UserRegister(BaseModel):
     username: str
@@ -24,10 +29,18 @@ class UserLogin(BaseModel):
     password: str
 
 
-@router.post("/register")
-def register(user: UserRegister):
+# =========================
+# REGISTER USER
+# =========================
 
-    if user.username in users_db:
+@router.post("/register")
+def register(user: UserRegister, db: Session = Depends(get_db)):
+
+    existing_user = db.query(User).filter(
+        User.username == user.username
+    ).first()
+
+    if existing_user:
         raise HTTPException(
             status_code=400,
             detail="User already exists"
@@ -35,32 +48,46 @@ def register(user: UserRegister):
 
     hashed_pw = hash_password(user.password)
 
-    users_db[user.username] = hashed_pw
+    new_user = User(
+        username=user.username,
+        password=hashed_pw
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     return {
-        "message": "User registered successfully"
+        "message": "User registered successfully",
+        "user_id": new_user.id
     }
 
 
-@router.post("/login")
-def login(user: UserLogin):
+# =========================
+# LOGIN USER
+# =========================
 
-    if user.username not in users_db:
+@router.post("/login")
+def login(user: UserLogin, db: Session = Depends(get_db)):
+
+    db_user = db.query(User).filter(
+        User.username == user.username
+    ).first()
+
+    if not db_user:
         raise HTTPException(
             status_code=400,
             detail="Invalid credentials"
         )
 
-    stored_hash = users_db[user.username]
-
-    if not verify_password(user.password, stored_hash):
+    if not verify_password(user.password, db_user.password):
         raise HTTPException(
             status_code=400,
             detail="Invalid credentials"
         )
 
     token = create_access_token(
-        {"sub": user.username}
+        {"sub": db_user.username}
     )
 
     return {
