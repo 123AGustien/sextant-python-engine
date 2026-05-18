@@ -2,15 +2,16 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.db.deps import get_db
+from app.models.user import User
+
 from app.services.auth_service import (
     hash_password,
     verify_password
 )
 
 from app.core.security import create_access_token
-
-from app.db.deps import get_db
-from app.models.user import User
+from app.services.api_key_service import generate_api_key
 
 router = APIRouter()
 
@@ -30,12 +31,13 @@ class UserLogin(BaseModel):
 
 
 # =========================
-# REGISTER USER
+# REGISTER USER (SAAS READY)
 # =========================
 
 @router.post("/register")
 def register(user: UserRegister, db: Session = Depends(get_db)):
 
+    # check if user exists
     existing_user = db.query(User).filter(
         User.username == user.username
     ).first()
@@ -46,11 +48,17 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
             detail="User already exists"
         )
 
+    # hash password
     hashed_pw = hash_password(user.password)
 
+    # generate API key (monetisation layer)
+    api_key = generate_api_key()
+
+    # create user
     new_user = User(
         username=user.username,
-        password=hashed_pw
+        password=hashed_pw,
+        api_key=api_key
     )
 
     db.add(new_user)
@@ -59,12 +67,13 @@ def register(user: UserRegister, db: Session = Depends(get_db)):
 
     return {
         "message": "User registered successfully",
-        "user_id": new_user.id
+        "user_id": new_user.id,
+        "api_key": new_user.api_key
     }
 
 
 # =========================
-# LOGIN USER
+# LOGIN USER (SAAS READY)
 # =========================
 
 @router.post("/login")
@@ -86,11 +95,13 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             detail="Invalid credentials"
         )
 
+    # JWT token for session auth
     token = create_access_token(
         {"sub": db_user.username}
     )
 
     return {
         "access_token": token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "api_key": db_user.api_key
     }
