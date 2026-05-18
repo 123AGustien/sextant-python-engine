@@ -1,6 +1,6 @@
 from passlib.context import CryptContext
 
-# Password hashing configuration (bcrypt is standard for production SaaS)
+# Password hashing configuration (bcrypt for production SaaS security)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -13,11 +13,9 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a plain password against a hashed password.
+    Verify a plain password against a hashed bcrypt hash.
     """
     return pwd_context.verify(plain_password, hashed_password)
-
-git add .
-git commit -m "fix: restore auth_service module for production deployment"
+    git add .
+git commit -m "fix: restore auth service module and ensure production stability"
 git push origin main
-
