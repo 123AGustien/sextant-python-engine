@@ -7,11 +7,16 @@ from app.api.webhooks import router as webhook_router
 
 from app.db.init_db import init_db
 
-app = FastAPI()
+
+app = FastAPI(
+    title="Sextant Python Engine",
+    description="SaaS Backend API with Auth + Billing + Stripe Integration",
+    version="1.0.0"
+)
 
 
 # =========================
-# STARTUP (DB INIT)
+# DATABASE INITIALISATION
 # =========================
 @app.on_event("startup")
 def startup():
@@ -19,12 +24,12 @@ def startup():
 
 
 # =========================
-# ROUTES
+# ROUTES REGISTRATION
 # =========================
 app.include_router(users_router)
 app.include_router(auth_router)
 
-# 💰 STEP 13: MONETISATION ROUTES
+# 💰 SAAS MONETISATION LAYER
 app.include_router(billing_router)
 app.include_router(webhook_router)
 
@@ -34,4 +39,7 @@ app.include_router(webhook_router)
 # =========================
 @app.get("/")
 def home():
-    return {"message": "Python backend system is running"}
+    return {
+        "status": "running",
+        "service": "Sextant Python Engine"
+    }
