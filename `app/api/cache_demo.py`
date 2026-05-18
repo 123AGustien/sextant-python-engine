@@ -1,0 +1,32 @@
+---
+
+# 📁 2. FILE: `app/api/cache_demo.py`
+
+```md id="s23_file_2"
+# ⚡ Cache Usage Example API
+
+Demonstrates how Redis cache is used in FastAPI routes.
+
+---
+
+## 🧱 API Implementation
+
+```python
+from fastapi import APIRouter
+from app.core.cache import get_cache, set_cache
+
+router = APIRouter()
+
+@router.get("/cached-data")
+def cached_data():
+
+    cached = get_cache("demo_key")
+
+    if cached:
+        return {"source": "cache", "data": cached}
+
+    data = {"message": "fresh database response"}
+
+    set_cache("demo_key", str(data), ttl=60)
+
+    return {"source": "db", "data": data}
