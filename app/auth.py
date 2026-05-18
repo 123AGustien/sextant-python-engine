@@ -1,31 +1,78 @@
-from passlib.context import CryptContext
-from jose import jwt
-from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-# password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.auth import hash_password, verify_password, create_access_token
+from app.db.database import SessionLocal
+from app.models.user import User
 
-# secret key (for demo only)
-SECRET_KEY = "mysecretkey123"
-ALGORITHM = "HS256"
+router = APIRouter()
+
+# ---------------------------
+# DB session dependency
+# ---------------------------
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-# hash password
-def hash_password(password: str):
-    return pwd_context.hash(password)
+# ---------------------------
+# Request models
+# ---------------------------
+class UserRegister(BaseModel):
+    username: str
+    password: str
 
 
-# verify password
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
 
-# create JWT token
-def create_access_token(data: dict, expires_minutes: int = 30):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
+# ---------------------------
+# REGISTER
+# ---------------------------
+@router.post("/register")
+def register(user: UserRegister, db: Session = Depends(get_db)):
 
-    to_encode.update({"exp": expire})
+    existing_user = db.query(User).filter(User.username == user.username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already exists")
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    hashed_pw = hash_password(user.password)
+
+    new_user = User(
+        username=user.username,
+        password=hashed_pw
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User registered successfully"}
+
+
+# ---------------------------
+# LOGIN
+# ---------------------------
+@router.post("/login")
+def login(user: UserLogin, db: Session = Depends(get_db)):
+
+    db_user = db.query(User).filter(User.username == user.username).first()
+
+    if not db_user:
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    if not verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
+
+    token = create_access_token({"sub": db_user.username})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
