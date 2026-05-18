@@ -23,7 +23,7 @@ class User(Base):
     )
 
     # =========================
-    # SAAS MONETISATION LAYER
+    # AUTH / SAAS ACCESS LAYER
     # =========================
     api_key = Column(
         String,
@@ -33,9 +33,17 @@ class User(Base):
     )
 
     # =========================
-    # USAGE TRACKING (STEP 11)
+    # USAGE / BILLING FOUNDATION
     # =========================
     request_count = Column(
         Integer,
-        default=0
+        default=0,
+        nullable=False
+    )
+
+    # 💰 READY FOR STEP 13 (BILLING)
+    plan = Column(
+        String,
+        default="free",
+        nullable=False
     )
