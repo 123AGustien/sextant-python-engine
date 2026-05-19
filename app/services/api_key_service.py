@@ -2,22 +2,38 @@ import secrets
 import hashlib
 
 
+# ---------------------------
+# GENERATE API KEY (ONE-TIME DISPLAY)
+# ---------------------------
 def generate_api_key() -> str:
     """
-    Generate a secure API key (visible to user only once)
+    Generate a secure API key.
+    This is shown to the user only once.
     """
-    return "sk_" + secrets.token_urlsafe(32)
+    return f"sk_{secrets.token_urlsafe(32)}"
 
 
+# ---------------------------
+# HASH API KEY (STORE ONLY THIS IN DB)
+# ---------------------------
 def hash_api_key(api_key: str) -> str:
     """
-    Store only hashed version in DB (security best practice)
+    Hash API key for secure storage in database.
     """
-    return hashlib.sha256(api_key.encode()).hexdigest()
+    if not api_key:
+        raise ValueError("API key cannot be empty")
+
+    return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
 
 
+# ---------------------------
+# VERIFY API KEY (INCOMING REQUESTS)
+# ---------------------------
 def verify_api_key(api_key: str, stored_hash: str) -> bool:
     """
-    Validate incoming API key against stored hash
+    Verify incoming API key against stored hash.
     """
-    return hashlib.sha256(api_key.encode()).hexdigest() == stored_hash
+    if not api_key or not stored_hash:
+        return False
+
+    return hashlib.sha256(api_key.encode("utf-8")).hexdigest() == stored_hash
