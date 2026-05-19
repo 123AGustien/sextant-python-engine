@@ -1,8 +1,6 @@
 from fastapi import FastAPI
-
 from app.db.init_db import init_db
-from app.api.auth_routes import router as auth_router
-from app.api.protected_routes import router as protected_router
+from app.api import all_routers
 
 app = FastAPI()
 
@@ -12,8 +10,8 @@ def startup_event():
     init_db()
 
 
-app.include_router(auth_router)
-app.include_router(protected_router)
+for router in all_routers:
+    app.include_router(router)
 
 
 @app.get("/")
