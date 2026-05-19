@@ -6,7 +6,6 @@ async def paypal_webhook(request: Request):
 
     if event_type == "CHECKOUT.ORDER.APPROVED":
 
-        # safer extraction
         try:
             purchase_units = body["resource"].get("purchase_units", [])
             user_id = purchase_units[0].get("custom_id")
@@ -24,7 +23,7 @@ async def paypal_webhook(request: Request):
             if not user:
                 return {"status": "user_not_found"}
 
-            # 🔐 IDENTITY GUARD (IMPORTANT FIX)
+            # idempotency guard
             if user.plan == "pro":
                 return {"status": "already_upgraded"}
 
