@@ -5,7 +5,13 @@ from app.api.protected_routes import router as protected_router
 from app.api.tenant_routes import router as tenant_router
 
 app = FastAPI()
+from fastapi import FastAPI
 
+app = FastAPI()
+
+@app.get("/")
+def health():
+    return {"status": "ok"}
 
 @app.on_event("startup")
 def startup_event():
