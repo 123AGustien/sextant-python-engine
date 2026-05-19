@@ -13,6 +13,3 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not plain_password or not hashed_password:
         return False
     return pwd_context.verify(plain_password, hashed_password)
-git add .
-git commit -m "fix: stabilize Railway startup imports"
-git push origin main
