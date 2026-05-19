@@ -1,5 +1,7 @@
 import os
 import requests
+from requests.auth import HTTPBasicAuth
+
 
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
 PAYPAL_SECRET = os.getenv("PAYPAL_SECRET")
@@ -11,7 +13,7 @@ def verify_webhook_signature(headers, body):
 
     webhook_id = os.getenv("PAYPAL_WEBHOOK_ID")
 
-    auth = requests.auth.HTTPBasicAuth(
+    auth = HTTPBasicAuth(
         PAYPAL_CLIENT_ID,
         PAYPAL_SECRET
     )
