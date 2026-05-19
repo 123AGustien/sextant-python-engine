@@ -7,18 +7,7 @@ from app.core.api_keys import verify_api_key
 
 
 # ---------------------------
-# DB SESSION
-# ---------------------------
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-# ---------------------------
-# API KEY MIDDLEWARE LOGIC
+# API KEY MIDDLEWARE
 # ---------------------------
 async def api_key_guard(request: Request, call_next):
     """
@@ -46,12 +35,14 @@ async def api_key_guard(request: Request, call_next):
         if not verify_api_key(api_key, record.key_hash):
             raise HTTPException(status_code=401, detail="API key verification failed")
 
-        # attach tenant context
+        # ---------------------------
+        # CRITICAL CONTEXT ATTACHMENT
+        # ---------------------------
+        request.state.api_key_id = record.id
         request.state.user_id = record.user_id
         request.state.tenant_id = record.tenant_id
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
     finally:
         db.close()
